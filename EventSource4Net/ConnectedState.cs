@@ -47,7 +47,7 @@ namespace EventSource4Net
                         {
                             _logger.Trace(ex, "ConnectedState.Run");
                         }
-                        if (!cancelToken.IsCancellationRequested)
+                        if (!cancelToken.IsCancellationRequested && !taskRead.IsFaulted)
                         {
                             int bytesRead = taskRead.Result;
                             if (bytesRead > 0) // stream has not reached the end yet
