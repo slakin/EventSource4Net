@@ -17,15 +17,18 @@ namespace EventSource4Net
         private ServerSentEvent mSse = null;
         private string mRemainingText = string.Empty;   // the text that is not ended with a lineending char is saved for next call.
         private IServerResponse mResponse;
+        private Dictionary<string, string> headers;
+
         public EventSourceState State { get { return EventSourceState.OPEN; } }
 
-        public ConnectedState(IServerResponse response, IWebRequesterFactory webRequesterFactory)
+        public ConnectedState(IServerResponse response, IWebRequesterFactory webRequesterFactory, Dictionary<string, string> headers)
         {
             mResponse = response;
             mWebRequesterFactory = webRequesterFactory;
+            this.headers = headers;
         }
 
-        public Task<IConnectionState> Run(Action<ServerSentEvent> msgReceived, CancellationToken cancelToken)
+        public Task<IConnectionState> Run(Action<ServerSentEvent> msgReceived, CancellationToken cancelToken, Dictionary<string, string> headers)
         {
             int i = 0;
 
@@ -130,7 +133,7 @@ namespace EventSource4Net
                         //stream.Close();
                         //mResponse.Close();
                         //mResponse.Dispose();
-                        return new DisconnectedState(mResponse.ResponseUri, mWebRequesterFactory);
+                        return new DisconnectedState(mResponse.ResponseUri, mWebRequesterFactory, headers);
                     }
                 }
             });

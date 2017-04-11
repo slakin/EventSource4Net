@@ -10,6 +10,6 @@ namespace EventSource4Net
     interface IConnectionState
     {
         EventSourceState State { get; }
-        Task<IConnectionState> Run(Action<ServerSentEvent> MsgReceivedCallback, CancellationToken cancelToken);
+        Task<IConnectionState> Run(Action<ServerSentEvent> MsgReceivedCallback, CancellationToken cancelToken, Dictionary<string, string> headers);
     }
 }

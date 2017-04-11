@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Net;
-using System.IO;
-using System.Threading.Tasks;
 using System.Threading;
 
 namespace EventSource4Net
@@ -16,6 +12,8 @@ namespace EventSource4Net
         public event EventHandler<StateChangedEventArgs> StateChanged;
         public event EventHandler<ServerSentEventReceivedEventArgs> EventReceived;
 
+        public CancellationTokenSource CancellationToken { get; set; }
+
         private IWebRequesterFactory _webRequesterFactory = new WebRequesterFactory();
         private int _timeout = 0;
         public Uri Url { get; private set; }
@@ -24,6 +22,8 @@ namespace EventSource4Net
         private IConnectionState mCurrentState = null;
         private CancellationToken mStopToken;
         private CancellationTokenSource mTokenSource = new CancellationTokenSource();
+        private Dictionary<string, string> _headers;
+
         private IConnectionState CurrentState
         {
             get { return mCurrentState; }
@@ -47,11 +47,17 @@ namespace EventSource4Net
             Initialize(url, timeout);
         }
 
+        public EventSource(Uri url, Dictionary<string, string> headers, int timeout)
+        {
+            _headers = headers;
+            Initialize(url, timeout);
+        }
+
         /// <summary>
         /// Constructor for testing purposes
         /// </summary>
         /// <param name="factory">The factory that generates the WebRequester to use.</param>
-        protected EventSource(Uri url, IWebRequesterFactory factory)
+        public EventSource(Uri url, IWebRequesterFactory factory)
         {
             _webRequesterFactory = factory;
             Initialize(url, 0);
@@ -61,7 +67,7 @@ namespace EventSource4Net
         {
             _timeout = timeout;
             Url = url;
-            CurrentState = new DisconnectedState(Url,_webRequesterFactory);
+            CurrentState = new DisconnectedState(Url, _webRequesterFactory, _headers);
             _logger.Info("EventSource created for " + url.ToString());
         }
 
@@ -85,7 +91,7 @@ namespace EventSource4Net
             if (mTokenSource.IsCancellationRequested && CurrentState.State == EventSourceState.CLOSED)
                 return;
 
-            mCurrentState.Run(this.OnEventReceived, mTokenSource.Token).ContinueWith(cs =>
+            mCurrentState.Run(this.OnEventReceived, mTokenSource.Token, _headers).ContinueWith(cs =>
             {
                 CurrentState = cs.Result;
                 Run();

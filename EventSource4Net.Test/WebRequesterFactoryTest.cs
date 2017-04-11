@@ -36,7 +36,7 @@ namespace EventSource4Net.Test
             this.Response = response;
         }
 
-        public System.Threading.Tasks.Task<IServerResponse> Get(Uri url)
+        public System.Threading.Tasks.Task<IServerResponse> Get(Uri url, Dictionary<string, string> headers)
         {
             return Task.Factory.StartNew<IServerResponse>(() =>
             {
@@ -44,6 +44,7 @@ namespace EventSource4Net.Test
                 return Response;
             });
         }
+
     }
 
     class ServiceResponseMock : IServerResponse
