@@ -81,5 +81,44 @@ namespace EventSource4Net.Test
         }
 
 
+        [TestMethod]
+        public void TestSuccesfulConnectionWithHeaders()
+        {
+            // setup
+            Uri url = new Uri("http://test.com");
+            CancellationTokenSource cts = new CancellationTokenSource();
+            List<EventSourceState> states = new List<EventSourceState>();
+            ServiceResponseMock response = new ServiceResponseMock(url, System.Net.HttpStatusCode.OK);
+            WebRequesterFactoryMock factory = new WebRequesterFactoryMock(response);
+            ManualResetEvent stateIsOpen = new ManualResetEvent(false);
+
+            var headers = new Dictionary<string, string>
+            {
+                { "x-key", "headerValue" }
+            };
+
+            TestableEventSource es = new TestableEventSource(url, factory, headers);
+            es.StateChanged += (o, e) =>
+            {
+                states.Add(e.State);
+                if (e.State == EventSourceState.OPEN)
+                {
+                    stateIsOpen.Set();
+                    cts.Cancel();
+                }
+            };
+
+
+            // act
+            stateIsOpen.Reset();
+
+            es.Start(cts.Token);
+
+            stateIsOpen.WaitOne();
+
+            // assert
+            Assert.AreEqual(1, factory.WebRequesterMock.Response.Headers.Count);
+            Assert.AreEqual("headerValue", factory.WebRequesterMock.Response.Headers["x-key"]);
+        }
     }
 }

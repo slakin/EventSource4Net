@@ -12,5 +12,9 @@ namespace EventSource4Net.Test
         {
 
         }
+        public TestableEventSource(Uri url, IWebRequesterFactory factory, Dictionary<string, string> headers) : base(url, factory, headers)
+        {
+
+        }
     }
 }

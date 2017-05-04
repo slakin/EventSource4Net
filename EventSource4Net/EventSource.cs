@@ -23,6 +23,9 @@ namespace EventSource4Net
         private CancellationToken mStopToken;
         private CancellationTokenSource mTokenSource = new CancellationTokenSource();
         private Dictionary<string, string> _headers;
+        private Uri url;
+        private IWebRequesterFactory factory;
+        private Dictionary<string, string> headers;
 
         private IConnectionState CurrentState
         {
@@ -63,6 +66,13 @@ namespace EventSource4Net
             Initialize(url, 0);
         }
 
+        public EventSource(Uri url, IWebRequesterFactory factory, Dictionary<string, string> headers)
+        {
+            _webRequesterFactory = factory;
+            _headers = headers;
+            Initialize(url, 0);
+        }
+
         private void Initialize(Uri url, int timeout)
         {
             _timeout = timeout;
@@ -91,7 +101,7 @@ namespace EventSource4Net
             if (mTokenSource.IsCancellationRequested && CurrentState.State == EventSourceState.CLOSED)
                 return;
 
-            mCurrentState.Run(this.OnEventReceived, mTokenSource.Token, _headers).ContinueWith(cs =>
+            mCurrentState.Run(this.OnEventReceived, mTokenSource.Token).ContinueWith(cs =>
             {
                 CurrentState = cs.Result;
                 Run();

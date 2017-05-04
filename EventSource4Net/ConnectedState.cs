@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Net;
-using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
 
@@ -17,7 +15,7 @@ namespace EventSource4Net
         private ServerSentEvent mSse = null;
         private string mRemainingText = string.Empty;   // the text that is not ended with a lineending char is saved for next call.
         private IServerResponse mResponse;
-        private Dictionary<string, string> headers;
+        private Dictionary<string, string> mHeaders;
 
         public EventSourceState State { get { return EventSourceState.OPEN; } }
 
@@ -25,10 +23,10 @@ namespace EventSource4Net
         {
             mResponse = response;
             mWebRequesterFactory = webRequesterFactory;
-            this.headers = headers;
+            mHeaders = headers;
         }
 
-        public Task<IConnectionState> Run(Action<ServerSentEvent> msgReceived, CancellationToken cancelToken, Dictionary<string, string> headers)
+        public Task<IConnectionState> Run(Action<ServerSentEvent> msgReceived, CancellationToken cancelToken)
         {
             int i = 0;
 
@@ -133,7 +131,7 @@ namespace EventSource4Net
                         //stream.Close();
                         //mResponse.Close();
                         //mResponse.Dispose();
-                        return new DisconnectedState(mResponse.ResponseUri, mWebRequesterFactory, headers);
+                        return new DisconnectedState(mResponse.ResponseUri, mWebRequesterFactory, mHeaders);
                     }
                 }
             });

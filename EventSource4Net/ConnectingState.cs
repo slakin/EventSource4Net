@@ -12,7 +12,7 @@ namespace EventSource4Net
 
         private Uri mUrl;
         private IWebRequesterFactory mWebRequesterFactory;
-        private Dictionary<string, string> headers;
+        private Dictionary<string, string> mHeaders;
 
         public EventSourceState State { get { return EventSourceState.CONNECTING; } }
         
@@ -22,13 +22,13 @@ namespace EventSource4Net
             if (webRequesterFactory == null) throw new ArgumentNullException("Factory cant be null");
             mUrl = url;
             mWebRequesterFactory = webRequesterFactory;
-            this.headers = headers;
+            mHeaders = headers;
         }
 
-        public Task<IConnectionState> Run(Action<ServerSentEvent> donothing, CancellationToken cancelToken, Dictionary<string, string> headers)
+        public Task<IConnectionState> Run(Action<ServerSentEvent> donothing, CancellationToken cancelToken)
         {
             IWebRequester requester = mWebRequesterFactory.Create();
-            var taskResp = requester.Get(mUrl, headers);
+            var taskResp = requester.Get(mUrl, mHeaders);
 
             return taskResp.ContinueWith<IConnectionState>(tsk => 
             {
@@ -37,7 +37,7 @@ namespace EventSource4Net
                     IServerResponse response = tsk.Result;
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
-                        return new ConnectedState(response, mWebRequesterFactory, headers);
+                        return new ConnectedState(response, mWebRequesterFactory, mHeaders);
                     }
                     else
                     {
@@ -45,7 +45,7 @@ namespace EventSource4Net
                     }
                 }
 
-                return new DisconnectedState(mUrl, mWebRequesterFactory, headers);
+                return new DisconnectedState(mUrl, mWebRequesterFactory, mHeaders);
             });
         }
     }
