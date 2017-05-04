@@ -60,13 +60,13 @@ namespace EventSource4Net
         /// Constructor for testing purposes
         /// </summary>
         /// <param name="factory">The factory that generates the WebRequester to use.</param>
-        public EventSource(Uri url, IWebRequesterFactory factory)
+        protected EventSource(Uri url, IWebRequesterFactory factory)
         {
             _webRequesterFactory = factory;
             Initialize(url, 0);
         }
 
-        public EventSource(Uri url, IWebRequesterFactory factory, Dictionary<string, string> headers)
+        protected EventSource(Uri url, IWebRequesterFactory factory, Dictionary<string, string> headers)
         {
             _webRequesterFactory = factory;
             _headers = headers;
