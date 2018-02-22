@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -50,7 +51,7 @@ namespace EventSource4Net.Test
 
     class ServiceResponseMock : IServerResponse
     {
-        private Stream mStream;
+        private TestableStream mStream;
         private StreamWriter mStreamWriter;
         private Uri mUrl;
         private Dictionary<string, string> mHeaders;
@@ -103,6 +104,11 @@ namespace EventSource4Net.Test
             mStreamWriter.Write(text);
             mStreamWriter.Flush();
         }
+
+        public void DistantConnectionClose()
+        {
+            mStream.Throws(new SocketException(10054));
+        }
     }
 
     class GetIsCalledEventArgs : EventArgs
@@ -119,6 +125,13 @@ namespace EventSource4Net.Test
     {
         long _pos = 0;
         System.Collections.Concurrent.BlockingCollection<string> _texts = new System.Collections.Concurrent.BlockingCollection<string>();
+        private CancellationTokenSource _cancellationTokenSource;
+        private Exception _throw;
+
+        public TestableStream()
+        {
+            _cancellationTokenSource = new CancellationTokenSource();
+        }
 
         public override bool CanRead
         {
@@ -159,11 +172,23 @@ namespace EventSource4Net.Test
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            string s = _texts.Take();
-
-            byte[] encodedText = Encoding.UTF8.GetBytes(s);
-            encodedText.CopyTo(buffer, offset);
-            return encodedText.Length;
+            try
+            {
+                var s = _texts.Take(_cancellationTokenSource.Token);
+                byte[] encodedText = Encoding.UTF8.GetBytes(s);
+                encodedText.CopyTo(buffer, offset);
+                return encodedText.Length;
+            }
+            catch (OperationCanceledException)
+            {
+                if (_throw != null)
+                {
+                    var ex = _throw;
+                    _throw = null;
+                    throw ex;
+                }
+                return 0;
+            }
         }
 
         public override long Seek(long offset, SeekOrigin origin)
@@ -181,6 +206,12 @@ namespace EventSource4Net.Test
             string s = Encoding.UTF8.GetString(buffer, offset, count);
             _texts.Add(s);
             //_texts.CompleteAdding();
+        }
+
+        public void Throws(Exception exception)
+        {
+            _cancellationTokenSource.Cancel();
+            _throw = exception;
         }
     }
 
