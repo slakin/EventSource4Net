@@ -94,7 +94,7 @@ namespace EventSource4Net.Test
 
             var headers = new Dictionary<string, string>
             {
-                { "x-key", "headerValue" }
+                {"x-key", "headerValue"}
             };
 
             TestableEventSource es = new TestableEventSource(url, factory, headers);
@@ -120,8 +120,7 @@ namespace EventSource4Net.Test
             Assert.AreEqual(1, factory.WebRequesterMock.Response.Headers.Count);
             Assert.AreEqual("headerValue", factory.WebRequesterMock.Response.Headers["x-key"]);
         }
-    }
-}
+
         [TestMethod]
         public void TestReConnectionAfterConnectionLost()
         {
