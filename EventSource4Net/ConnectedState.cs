@@ -131,6 +131,8 @@ namespace EventSource4Net
                         //stream.Close();
                         //mResponse.Close();
                         //mResponse.Dispose();
+
+                        WebRequester._WebRequest.Abort();
                         return new DisconnectedState(mResponse.ResponseUri, mWebRequesterFactory, mHeaders);
                     }
                 }

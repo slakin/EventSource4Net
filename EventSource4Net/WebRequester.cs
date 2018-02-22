@@ -7,9 +7,13 @@ namespace EventSource4Net
 {
     class WebRequester : IWebRequester
     {
+        public static WebRequest _WebRequest { get; set; }
+        private HttpWebRequest wreq { get; set; }
+
         public Task<IServerResponse> Get(Uri url, Dictionary<string, string> headers = null)
         {
-            var wreq = (HttpWebRequest)WebRequest.Create(url);
+            _WebRequest = WebRequest.Create(url);
+            wreq = (HttpWebRequest)_WebRequest;
             wreq.Method = "GET";
             wreq.Proxy = null;
 
