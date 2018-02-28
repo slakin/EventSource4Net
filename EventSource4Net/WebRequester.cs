@@ -16,6 +16,7 @@ namespace EventSource4Net
             wreq = (HttpWebRequest)_WebRequest;
             wreq.Method = "GET";
             wreq.Proxy = null;
+            wreq.Accept = "text/event-stream";
 
             if (headers != null)
             {
