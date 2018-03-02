@@ -9,7 +9,6 @@ namespace EventSource4Net
 {
     public interface IWebRequester
     {
-        Task<IServerResponse> Get(Uri url);
-
+        Task<IServerResponse> Get(Uri url, Dictionary<string, string> headers = null);
     }
 }

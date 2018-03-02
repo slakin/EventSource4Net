@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Net;
-using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
 
@@ -17,12 +15,15 @@ namespace EventSource4Net
         private ServerSentEvent mSse = null;
         private string mRemainingText = string.Empty;   // the text that is not ended with a lineending char is saved for next call.
         private IServerResponse mResponse;
+        private Dictionary<string, string> mHeaders;
+
         public EventSourceState State { get { return EventSourceState.OPEN; } }
 
-        public ConnectedState(IServerResponse response, IWebRequesterFactory webRequesterFactory)
+        public ConnectedState(IServerResponse response, IWebRequesterFactory webRequesterFactory, Dictionary<string, string> headers)
         {
             mResponse = response;
             mWebRequesterFactory = webRequesterFactory;
+            mHeaders = headers;
         }
 
         public Task<IConnectionState> Run(Action<ServerSentEvent> msgReceived, CancellationToken cancelToken)
@@ -47,7 +48,7 @@ namespace EventSource4Net
                         {
                             _logger.Trace(ex, "ConnectedState.Run");
                         }
-                        if (!cancelToken.IsCancellationRequested)
+                        if (!cancelToken.IsCancellationRequested && !taskRead.IsFaulted)
                         {
                             int bytesRead = taskRead.Result;
                             if (bytesRead > 0) // stream has not reached the end yet
@@ -130,7 +131,9 @@ namespace EventSource4Net
                         //stream.Close();
                         //mResponse.Close();
                         //mResponse.Dispose();
-                        return new DisconnectedState(mResponse.ResponseUri, mWebRequesterFactory);
+
+                        WebRequester._WebRequest.Abort();
+                        return new DisconnectedState(mResponse.ResponseUri, mWebRequesterFactory, mHeaders);
                     }
                 }
             });

@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Net;
-using System.IO;
-using System.Threading.Tasks;
 using System.Threading;
 
 namespace EventSource4Net
@@ -16,6 +12,8 @@ namespace EventSource4Net
         public event EventHandler<StateChangedEventArgs> StateChanged;
         public event EventHandler<ServerSentEventReceivedEventArgs> EventReceived;
 
+        public CancellationTokenSource CancellationToken { get; set; }
+
         private IWebRequesterFactory _webRequesterFactory = new WebRequesterFactory();
         private int _timeout = 0;
         public Uri Url { get; private set; }
@@ -24,6 +22,11 @@ namespace EventSource4Net
         private IConnectionState mCurrentState = null;
         private CancellationToken mStopToken;
         private CancellationTokenSource mTokenSource = new CancellationTokenSource();
+        private Dictionary<string, string> _headers;
+        private Uri url;
+        private IWebRequesterFactory factory;
+        private Dictionary<string, string> headers;
+
         private IConnectionState CurrentState
         {
             get { return mCurrentState; }
@@ -47,6 +50,12 @@ namespace EventSource4Net
             Initialize(url, timeout);
         }
 
+        public EventSource(Uri url, Dictionary<string, string> headers, int timeout)
+        {
+            _headers = headers;
+            Initialize(url, timeout);
+        }
+
         /// <summary>
         /// Constructor for testing purposes
         /// </summary>
@@ -57,11 +66,18 @@ namespace EventSource4Net
             Initialize(url, 0);
         }
 
+        protected EventSource(Uri url, IWebRequesterFactory factory, Dictionary<string, string> headers)
+        {
+            _webRequesterFactory = factory;
+            _headers = headers;
+            Initialize(url, 0);
+        }
+
         private void Initialize(Uri url, int timeout)
         {
             _timeout = timeout;
             Url = url;
-            CurrentState = new DisconnectedState(Url,_webRequesterFactory);
+            CurrentState = new DisconnectedState(Url, _webRequesterFactory, _headers);
             _logger.Info("EventSource created for " + url.ToString());
         }
 
