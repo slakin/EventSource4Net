@@ -1,35 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EventSource4Net
 {
-    class WebRequester : IWebRequester
+    public class WebRequester : IWebRequester
     {
-        public static WebRequest _WebRequest { get; set; }
-        private HttpWebRequest wreq { get; set; }
+        static WebRequester()
+        {
+            ServicePointManager.DefaultConnectionLimit = 100000;
+
+            var http = new HttpClient();
+            
+            http.DefaultRequestHeaders.Add("Accept", "text/event-stream");
+            http.DefaultRequestHeaders.Add("accept-encoding", "gzip, deflate, br");
+
+            Http = http;
+
+        }
+
+        static HttpClient Http;
+
+        /// <summary>
+        /// Override default static HttpClient instance
+        /// </summary>
+        /// <param name="httpClient"></param>
+        public static void OverrideHttpClient(HttpClient httpClient)
+        {
+            Http = httpClient;
+        }
 
         public Task<IServerResponse> Get(Uri url, Dictionary<string, string> headers = null)
         {
-            _WebRequest = WebRequest.Create(url);
-            wreq = (HttpWebRequest)_WebRequest;
-            wreq.Method = "GET";
-            wreq.Proxy = null;
-            wreq.Accept = "text/event-stream";
-
-            if (headers != null)
-            {
-                foreach (var header in headers)
-                {
-                    wreq.Headers.Add(header.Key, header.Value);
-                }
-            }
-
-            var taskResp = Task.Factory.FromAsync<WebResponse>(wreq.BeginGetResponse,
-                                                            wreq.EndGetResponse,
-                                                            null).ContinueWith<IServerResponse>(t => new ServerResponse(t.Result));
-            return taskResp;
+            return Http.GetStreamAsync(url).ContinueWith<IServerResponse>(t => new ServerResponse(t.Result, url));
 
         }
     }

@@ -1,39 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Net;
-using System.Text;
 
 namespace EventSource4Net
 {
     class ServerResponse : IServerResponse
     {
-        private System.Net.HttpWebResponse mHttpResponse;
-
-        public ServerResponse(System.Net.WebResponse webResponse)
+        private readonly Stream _response;
+        
+        public ServerResponse(Stream response, Uri url)
         {
-            this.mHttpResponse = webResponse as HttpWebResponse;
+            ResponseUri = url;
+            _response = response;
         }
-
-        public HttpStatusCode StatusCode
-        {
-            get
-            {
-                return mHttpResponse.StatusCode;
-            }
-        }
+        // Only to be backward compatible. HttpClient throws exceptions if not OK anyway.
+        public HttpStatusCode StatusCode => HttpStatusCode.OK;
 
         public System.IO.Stream GetResponseStream()
         {
-            return mHttpResponse.GetResponseStream();
+            return _response;
         }
 
-        public Uri ResponseUri
-        {
-            get
-            {
-                return mHttpResponse.ResponseUri;
-            }
-        }
+        public Uri ResponseUri { get; }
     }
 }
