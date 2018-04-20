@@ -13,7 +13,10 @@ namespace EventSource4Net
         {
             ServicePointManager.DefaultConnectionLimit = 100000;
 
-            var http = new HttpClient();
+            var http = new HttpClient(new HttpClientHandler()
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            });
             
             http.DefaultRequestHeaders.Add("Accept", "text/event-stream");
             http.DefaultRequestHeaders.Add("accept-encoding", "gzip, deflate, br");
