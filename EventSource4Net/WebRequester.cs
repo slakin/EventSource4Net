@@ -38,6 +38,14 @@ namespace EventSource4Net
 
         public Task<IServerResponse> Get(Uri url, Dictionary<string, string> headers = null)
         {
+            if (headers != null) 
+            {
+                Http.DefaultRequestHeaders.Clear();
+                foreach (var header in headers)
+                {
+                    Http.DefaultRequestHeaders.Add(header.Key, header.Value);
+                }
+            }
             return Http.GetStreamAsync(url).ContinueWith<IServerResponse>(t => new ServerResponse(t.Result, url));
 
         }
